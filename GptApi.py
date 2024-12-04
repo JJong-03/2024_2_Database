@@ -52,3 +52,8 @@ class GptApi:
 
         # 응답에서 content 부분만 추출하여 반환
         return answer.content
+    
+    def analyze(self,query:str,question:str):
+        prompt = f"다음 글을 기반으로 문맥적 요소를 잃지 않되, 최대한 간결하게 질문에 답해줘 \n\n글 : {query}\n\n 질문 : {question}"
+        answer = self.llm(prompt)
+        return answer.content
