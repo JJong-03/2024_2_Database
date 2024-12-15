@@ -47,3 +47,4 @@ def index():
     posts = c.fetchall()
     conn.close()
     return render_template('index.html', posts=posts)    
+
