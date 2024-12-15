@@ -117,6 +117,16 @@ def post(post_id):
     conn.close()
     return render_template('post.html', post=post, comments=structured_comments)
 
+@app.route('/analyze_post', methods=['POST'])
+def analyze_post():
+    data = request.get_json()
+    post_content = data['content']
+    question = data['question']
+    try:
+       return jsonify({'summary':chatGPT.analyze(post_content, question)})
+    except Exception as e:
+        print(str(e))
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     init_db()
