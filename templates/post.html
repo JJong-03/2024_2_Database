@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 보기</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            padding: 20px;
+        }
+        .post-title {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .post-content {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .comment-section {
+            margin-top: 20px;
+            border-top: 2px solid #007bff;
+            padding-top: 20px;
+        }
+        .comment {
+            padding: 12px 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .comment-date {
+            font-size: 0.9em;
+            color: #777;
+            text-align: right;
+            margin-top: 5px;
+        }
+        .reply-form {
+            margin-top: 10px;
+            margin-left: 20px;
+        }
+        .btn-submit {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            font-size: 1em;
+            padding: 10px;
+            width: 100%;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .btn-submit:hover {
+            background-color: #0056b3;
+        }
+        .btn-reply {
+            background-color: transparent;
+            color: #007bff;
+            border: none;
+            padding: 0;
+            margin-top: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            text-decoration: underline;
+        }
+        .btn-reply:hover {
+            text-decoration: none;
+            color: #0056b3;
+        }
+        .reply-comment {
+            background-color: #f0f8ff;
+            border-left: 3px solid #007bff;
+            margin-top: 5px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .chat-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .chat-window {
+            display: none;
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 300px;
+            max-height: 400px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            overflow-y: auto;
+        }
+        .chat-window-header {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            font-weight: bold;
+        }
+        .chat-window-body {
+            padding: 10px;
+        }
+        .chat-window-footer {
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div>
+            <div class="post-title">{{ post[1] }}</div>
+            <div class="post-content" id="content2">{{ post[2].replace('\\n', '<br>')|safe }}</div>
+        </div>
+
+        <!-- 댓글 작성 폼 -->
+        <div class="mt-3">
+            <form method="post" class="comment-form">
+                <div class="mb-3">
+                    <label for="content" class="form-label">댓글 내용</label>
+                    <textarea id="content" name="content" class="form-control" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-submit">댓글 작성</button>
+            </form>
+        </div>
+
+        <!-- 댓글 섹션 -->
+        <div class="comment-section">
+            <h3 class="mb-4">댓글</h3>
+            {% for comment in comments[None] %}
+                <div class="comment">
+                    <p>{{ comment[2] }}</p>
+                    {% if comment[5] == 1 %}
+                    <div class="comment-date">AI에 의해 작성된 댓글입니다.</div>
+                    {% else %}
+                    <div class="comment-date">{{comment[4]}}</div>
+                    {% endif %}
+                    <button class="btn btn-reply reply-button" data-comment-id="{{ comment[0] }}">대댓글</button>
+                    <div class="reply-form" id="reply-form-{{ comment[0] }}" style="display: none;">
+                        <form method="post">
+                            <input type="hidden" name="parent_id" value="{{ comment[0] }}">
+                            <div class="mb-3">
+                                <textarea name="content" class="form-control" rows="2" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-submit">대댓글 작성</button>
+                        </form>
+                    </div>
+                    {% if comments[comment[0]] %}
+                        <div class="ml-4">
+                            {% for reply in comments[comment[0]] %}
+                                <div class="comment reply-comment">
+                                    <p>{{ reply[2] }}</p>
+                                    {% if reply[5] == 1 %}
+                                    <div class="comment-date">AI에 의해 작성된 댓글입니다.</div>
+                                    {% else %}
+                                    <div class="comment-date">{{reply[4]}}</div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 대화형 ChatGPT 창 -->
+    <div class="chat-button" id="chatButton">💬</div>
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-window-header">
+            ChatGPT 요약 및 분석
+        </div>
+        <div class="chat-window-body" id="chatBody">
+            <p>게시글에 대한 요약이나 질문을 입력하세요.</p>
+        </div>
+        <div class="chat-window-footer">
+            <textarea id="chatInput" class="form-control" rows="2" placeholder="질문을 입력하세요..."></textarea>
+            <button id="chatSend" class="btn btn-primary mt-2">전송</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 대댓글 폼 토글
+        document.querySelectorAll('.reply-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const commentId = this.dataset.commentId;
+                const replyForm = document.getElementById('reply-form-' + commentId);
+                replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+            });
+        });
+
+        // ChatGPT 대화창 토글
+        const chatButton = document.getElementById('chatButton');
+        const chatWindow = document.getElementById('chatWindow');
+        chatButton.addEventListener('click', () => {
+            chatWindow.style.display = chatWindow.style.display === 'none' ? 'block' : 'none';
+        });
+
+        // ChatGPT API 통신 예시
+        const chatSend = document.getElementById('chatSend');
+        const content2 = "{{ post[2] }}"
+        chatSend.addEventListener('click', async () => {
+            const chatInput = document.getElementById('chatInput').value;
+            if (!chatInput.trim()) return;
+            fetch("/analyze_post", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ content: content2,question: chatInput })
+            })
+            .then(response => response.json())
+                .then((data) => {
+                    const chatBody = document.getElementById('chatBody');
+            chatBody.innerHTML += `<p><strong>사용자:</strong> ${chatInput}</p>`;
+            chatBody.innerHTML += `<p><strong>ChatGPT:</strong> ${data.summary}</p>`;
+            document.getElementById('chatInput').value= '';
+            // 입력 초기화
+                })
+            // API 통신 예시 (가짜 응답 사용)
+
+        });
+    </script>
+</body>
+</html>
