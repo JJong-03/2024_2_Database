@@ -15,6 +15,7 @@ class GptApi:
         load_dotenv()
         self.text = ''
         self.sections = list()
+        self.read_textfile()
         self.api_key = os.environ.get('OPENAI_API_KEY')
         self.llm = ChatOpenAI(temperature=0, model="chatgpt-4o-latest", openai_api_key=self.api_key)
         self.client = OpenAI(api_key=self.api_key)
@@ -22,7 +23,6 @@ class GptApi:
         self.embeddings = OpenAIEmbeddings()
         self.vectorstore = Chroma.from_texts(self.sections, self.embedding_model)
 
-        self.read_textfile()
         self.retriever = self.vectorstore.as_retriever()
         
     def read_textfile(self):
