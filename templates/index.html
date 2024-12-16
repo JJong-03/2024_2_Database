@@ -38,8 +38,14 @@
             <tbody>
                 {% for post in posts %}
                     <tr>
+                        <!-- 번호 -->
                         <td>{{ post[0] }}</td>
-                        <td><a href="{{ url_for('post', post_id=post[0]) }}" class="text-decoration-none">{{ post[1] }}</a></td>
+                        <!-- 제목 -->
+                        <td>
+                            <a href="{{ url_for('post', post_id=post[1]) }}" class="text-decoration-none">
+                                {{ post[2] }}
+                            </a>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
