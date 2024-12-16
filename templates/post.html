@@ -30,7 +30,17 @@
             padding: 15px;
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        
+            max-height: 300px; /* 적당한 높이 제한 */
+            overflow-y: auto; /* 세로 스크롤 활성화 */
+            position: relative; /* 다른 요소와의 레이어 충돌 방지 */
+            z-index: 1; /* 다른 버튼들이 덮을 수 있도록 설정 */
         }
+        .d-flex {
+            position: relative;
+            z-index: 2; /* 버튼이 콘텐츠보다 위에 오도록 설정 */
+        }
+        
         .stats-section {
             margin-bottom: 20px;
             font-size: 1.1em;
@@ -118,7 +128,9 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
             overflow-y: auto;
+            z-index: 10; /* 다른 요소보다 위에 표시되도록 설정 */
         }
+        
         .chat-window-header {
             padding: 10px;
             background-color: #007bff;
@@ -147,7 +159,6 @@
             <a href="{{ url_for('edit_post', post_id=post[0]) }}" class="btn btn-warning btn-sm me-2">수정</a>
             <button class="btn btn-danger btn-sm" id="deletePostButton">삭제</button>
         </div>
-
         <!-- 좋아요 및 조회수 섹션 -->
         <div class="stats-section">
             <span id="likeCount">좋아요: 0</span> | 
