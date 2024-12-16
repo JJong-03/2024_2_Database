@@ -215,6 +215,20 @@ def analyze_post():
         print(str(e))
         return jsonify({'error': str(e)}), 500
 
+# 글 삭제
+@app.route('/delete/<int:post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    conn = sqlite3.connect('board.db')
+    c = conn.cursor()
+
+    # 게시글 삭제
+    c.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+    conn.commit()
+    conn.close()
+
+    return '', 204  # No Content 응답
+
+
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
