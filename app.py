@@ -108,6 +108,25 @@ def new_post():
     return render_template('new_post.html')
 
 
+# 게시글 수정 페이지
+@app.route('/post/edit/<int:post_id>', methods=['GET', 'POST'])
+def edit_post(post_id):
+    conn = sqlite3.connect('board.db')
+    c = conn.cursor()
+
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content'].replace('\r\n', '\n')
+        c.execute('UPDATE posts SET title = ?, content = ? WHERE id = ?', (title, content, post_id))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('post', post_id=post_id))
+
+    # GET 요청 시 수정할 게시글 데이터 가져오기
+    post = c.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
+    conn.close()
+    return render_template('edit_post.html', post=post)
+
 # 게시글 상세 및 댓글 보기 페이지
 @app.route('/post/<int:post_id>', methods=['GET', 'POST', 'DELETE'])
 def post(post_id):
