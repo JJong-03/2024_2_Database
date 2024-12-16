@@ -35,6 +35,28 @@ def init_db():
             FOREIGN KEY (parent_id) REFERENCES comments (id)
         )
     ''')
+    
+    # 좋아요 테이블 생성
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS likes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER NOT NULL,
+            user_id INTEGER DEFAULT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (post_id) REFERENCES posts (id)
+        )
+    ''')
+    
+    # 조회수 테이블 생성
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS views (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER NOT NULL,
+            user_ip TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (post_id) REFERENCES posts (id)
+        )
+    ''')
 
     conn.commit()
     conn.close()
@@ -48,6 +70,71 @@ def index():
     posts = c.fetchall()
     conn.close()
     return render_template('index.html', posts=posts)    
+
+# 좋아요 기능 추가
+@app.route('/like/<int:post_id>', methods=['POST'])
+def like_post(post_id):
+    conn = sqlite3.connect('board.db')
+    c = conn.cursor()
+
+    # 게시글이 존재하는지 확인
+    c.execute("SELECT id FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    if not post:
+        return jsonify({'error': 'Post not found'}), 404
+
+    # 좋아요 기록 추가
+    c.execute("INSERT INTO likes (post_id, user_id) VALUES (?, ?)", (post_id, None))  # 익명 사용자는 user_id가 None
+    conn.commit()
+    conn.close()
+
+    return jsonify({'message': 'Liked successfully'}), 200
+
+# 조회수 확인 추가
+@app.route('/view/<int:post_id>', methods=['POST'])
+def record_view(post_id):
+    user_ip = request.remote_addr
+    conn = sqlite3.connect('board.db')
+    c = conn.cursor()
+
+    # 게시글이 존재하는지 확인
+    c.execute("SELECT id FROM posts WHERE id = ?", (post_id,))
+    post = c.fetchone()
+    if not post:
+        return jsonify({'error': 'Post not found'}), 404
+
+    # 동일 IP가 동일 게시글을 최근 5분 내에 조회했는지 확인
+    c.execute("""
+        SELECT id FROM views 
+        WHERE post_id = ? AND user_ip = ? AND created_at > datetime('now', '-5 minutes')
+    """, (post_id, user_ip))
+    recent_view = c.fetchone()
+
+    if not recent_view:
+        # 새로운 조회 기록 추가
+        c.execute("INSERT INTO views (post_id, user_ip) VALUES (?, ?)", (post_id, user_ip))
+        conn.commit()
+
+    conn.close()
+    return jsonify({'message': 'View recorded successfully'}), 200
+
+# 좋아요랑 조회수 값 반환
+@app.route('/stats/<int:post_id>', methods=['GET'])
+def get_post_stats(post_id):
+    conn = sqlite3.connect('board.db')
+    c = conn.cursor()
+
+    # 좋아요 수
+    c.execute("SELECT COUNT(*) FROM likes WHERE post_id = ?", (post_id,))
+    like_count = c.fetchone()[0]
+
+    # 조회수
+    c.execute("SELECT COUNT(*) FROM views WHERE post_id = ?", (post_id,))
+    view_count = c.fetchone()[0]
+
+    conn.close()
+    return jsonify({'likes': like_count, 'views': view_count}), 200
+
 
 # 새 게시글 작성 페이지
 @app.route('/post/new', methods=['GET', 'POST'])

@@ -31,6 +31,10 @@
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+        .stats-section {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
         .comment-section {
             margin-top: 20px;
             border-top: 2px solid #007bff;
@@ -138,6 +142,13 @@
             <div class="post-content" id="content2">{{ post[2].replace('\\n', '<br>')|safe }}</div>
         </div>
 
+        <!-- 좋아요 및 조회수 섹션 -->
+        <div class="stats-section">
+            <span id="likeCount">좋아요: 0</span> | 
+            <span id="viewCount">조회수: 0</span>
+            <button id="likeButton" class="btn btn-primary btn-sm">좋아요</button>
+        </div>
+
         <!-- 댓글 작성 폼 -->
         <div class="mt-3">
             <form method="post" class="comment-form">
@@ -189,6 +200,7 @@
         </div>
     </div>
 
+
     <!-- 대화형 ChatGPT 창 -->
     <div class="chat-button" id="chatButton">💬</div>
     <div class="chat-window" id="chatWindow">
@@ -215,6 +227,35 @@
             });
         });
 
+        // 좋아요 버튼 클릭 이벤트
+        document.getElementById('likeButton').addEventListener('click', () => {
+            fetch(`/like/{{ post[0] }}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        updateStats();
+                    }
+                });
+        });
+
+        // 조회수 업데이트
+        function updateStats() {
+            fetch(`/stats/{{ post[0] }}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('likeCount').innerText = `좋아요: ${data.likes}`;
+                    document.getElementById('viewCount').innerText = `조회수: ${data.views}`;
+                });
+        }
+
+        // 페이지 로드 시 조회수 기록 및 통계 업데이트
+        window.onload = () => {
+            fetch(`/view/{{ post[0] }}`, { method: 'POST' });
+            updateStats();
+        };
+
         // ChatGPT 대화창 토글
         const chatButton = document.getElementById('chatButton');
         const chatWindow = document.getElementById('chatWindow');
@@ -222,29 +263,26 @@
             chatWindow.style.display = chatWindow.style.display === 'none' ? 'block' : 'none';
         });
 
-        // ChatGPT API 통신 예시
+        // ChatGPT API 통신
         const chatSend = document.getElementById('chatSend');
-        const content2 = "{{ post[2] }}"
         chatSend.addEventListener('click', async () => {
             const chatInput = document.getElementById('chatInput').value;
             if (!chatInput.trim()) return;
+
             fetch("/analyze_post", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ content: content2,question: chatInput })
+                body: JSON.stringify({ content: "{{ post[2] }}", question: chatInput })
             })
             .then(response => response.json())
-                .then((data) => {
-                    const chatBody = document.getElementById('chatBody');
-            chatBody.innerHTML += `<p><strong>사용자:</strong> ${chatInput}</p>`;
-            chatBody.innerHTML += `<p><strong>ChatGPT:</strong> ${data.summary}</p>`;
-            document.getElementById('chatInput').value= '';
-            // 입력 초기화
-                })
-            // API 통신 예시 (가짜 응답 사용)
-
+            .then(data => {
+                const chatBody = document.getElementById('chatBody');
+                chatBody.innerHTML += `<p><strong>사용자:</strong> ${chatInput}</p>`;
+                chatBody.innerHTML += `<p><strong>ChatGPT:</strong> ${data.summary}</p>`;
+                document.getElementById('chatInput').value = '';
+            });
         });
     </script>
 </body>
